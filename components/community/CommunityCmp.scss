@@ -1,0 +1,208 @@
+::-webkit-scrollbar{width:0}
+.cmp {
+	color: #333333;
+	background: #fff;
+}
+
+.content {
+	width: 664rpx;
+	margin: 0 auto;
+}
+
+.head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+
+	.head_content {
+		display: flex;
+		align-items: center;
+
+		image {
+			width: 72rpx;
+			height: 72rpx;
+			border-radius: 50%;
+		}
+
+		.head_text {
+			padding: 0 0 0 20rpx;
+
+			.name {
+				font-size: 30rpx;
+				font-weight: 500;
+				font-weight: normal;
+				color: #333333;
+			}
+
+			.tips {
+				font-size: 22rpx;
+				color: #BBC1CB;
+			}
+		}
+	}
+
+	/* 下箭头 */
+	image {
+		width: 24rpx;
+		height: 14rpx;
+	}
+}
+
+.textOrImg {
+	margin-top: 10rpx;
+	.text {
+		line-height: 44rpx;
+		.p {
+			word-break: break-all;//自动换行
+			display: -webkit-box;
+			-webkit-line-clamp: 4; //显示4行内容
+			-webkit-box-orient: vertical;
+			line-clamp: 4;
+			box-orient: vertical;
+			overflow: hidden;
+		}
+	}
+
+	padding-bottom:10rpx;
+
+	/* 图片集合的样式 */
+	.imgs {
+		display: flex;
+		flex-wrap: wrap;
+		padding: 10rpx 0;
+		.manyImage {
+			width: 214rpx;
+			height: 214rpx;
+			object-fit: cover;
+			margin-right: 4rpx;
+			margin-top: 4rpx;
+		}
+		.oneWidthImage{
+			max-width:600rpx ;
+			min-height:375rpx;
+		}
+		.oneHeightImage{
+			max-width: 375rpx;	
+			min-height:600rpx;
+			object-fit: none;    /*保留原有元素内容的长度和宽度*/
+		}
+		// .qz_imgs{
+		//         position: relative;
+		//         display: flex;
+		//         overflow: hidden;
+		
+		//          &.qz_imgs1{
+		//             image{
+		//                max-height: 320rpx;
+		//                 //max-width: 245rpx;//mode="widthFix"
+		//                 object-fit: cover;
+		//                 border-radius:3px;
+		//                 float: left;
+		//                 margin: 5px;
+		//             } 
+		//         }
+		
+		// }
+	}
+}
+
+/* ***********功能区***************** */
+.tools {
+	display: flex;
+	justify-content: space-around;
+	width: 750rpx;
+	height: 56rpx;
+	border-top: 1rpx solid rgba(0, 0, 0, 0.02);
+	.tool {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		font-size: 22rpx;
+
+		image {
+			width: 24rpx;
+			height: 24rpx;
+		}
+
+		span {
+			padding: 0 8rpx;
+		}
+	}
+}
+
+/* ***********弹出层***************** */
+ .popup{
+	 width: 750rpx;
+	 height: 572rpx;
+	 .modules{
+		 margin-top: 20rpx;
+		 .row{
+		 		 width: 672rpx;
+		 		 margin: 0 auto;
+		 		 height: 80rpx;
+		 		 line-height: 80rpx;
+		 		 border-bottom: 1rpx solid rgba(51,51,51,0.1);
+		 		 display: flex;
+				 align-items: center;
+				 image{
+		 			 width: 30rpx;
+		 			 height: 28rpx;
+		 		 }
+		 		 view{
+					 height: 80rpx;
+					 line-height: 80rpx;
+		 			 font-size: 30rpx;
+		 			 padding-left: 20rpx;
+					 display: flex;
+					 flex-direction: column;
+					 justify-content: space-between;
+					 span:nth-child(1){
+						 font-size: 30rpx;
+						 color: #333333;
+					 }
+					 span{
+						 font-size: 22rpx;
+						 color: #999999;
+						 height: 40rpx;
+						 line-height: 40rpx;
+					 }
+		 		 }
+		 }
+	 }
+	 .btn{
+		 width: 672rpx;
+		 height: 66rpx;
+		 line-height: 66rpx;
+		 text-align: center;
+		 font-size: 24rpx;
+		 background: #F2F5F8;
+		 border-radius: 34rpx;
+		 margin: 0 auto;	 
+		 position: fixed;
+		 margin-left:38rpx ;
+		 bottom: 40rpx;
+	 }
+ }
+ // 评论弹出层
+ .pl{
+	 display: flex;
+	 justify-content: space-around;
+	 align-items: center;
+	 background: #F3F3F3;
+	 min-height: 100rpx;
+	 padding: 10rpx 0;
+	 width: 750rpx;
+	 .input{
+		 .textarea{
+			 width: 580rpx;
+			 min-height: 30rpx;
+			 border-radius: 60rpx;
+		 }
+	 }
+ }
+ .custom{
+	 width: 100rp;
+	 height: 65rpx;
+	 background: #f7595a;
+	 color: #fff;
+ }

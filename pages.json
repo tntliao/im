@@ -1,0 +1,131 @@
+{
+		"easycom": {
+			"^u-(.*)": "uview-ui/components/u-$1/u-$1.vue",
+			"^top_(.*)": "@/components/top_$1/top_$1.vue"
+		},
+		"pages": [{
+				"path": "pages/index/index",
+				"style": {
+					"navigationBarTitleText": "",
+					"navigationStyle": "custom"
+				}
+			},
+			// 查看文件
+			{
+				"path": "pages/checkFiles/checkFiles"
+			},
+			// 语音通话
+			// #ifdef APP-PLUS
+			{
+				"path": "pages/voice/voice"
+			},
+			// #endif
+			// 签到
+			{
+				"path": "pages/sign_in/sign_in"
+			},
+			// 答题
+			{
+				"path": "pages/sign_in/sign_start"
+			},
+			// 社区
+			{
+				"path": "pages/community/community"
+			},
+			// 写文章
+			{
+				"path": "pages/community/article"
+			},
+			// 文章加图片
+			{
+				"path": "pages/community/sendImg"
+			},
+			// 图片
+			{
+				"path": "pages/msginfo/msginfo",
+				"style": {
+					"navigationBarTitleText": "",
+					"navigationStyle": "custom"
+				}
+			},
+			{
+				"path": "pages/friend/friend",
+				"style": {
+					"navigationBarTitleText": "通讯录"
+				}
+			},
+			{
+				"path": "pages/auth/auth",
+				"style": {
+					"navigationBarTitleText": "我的"
+				}
+			},
+			{
+				"path": "pages/group_chat/group_chat",
+				"style": {
+					"navigationBarTitleText": "群聊",
+					"navigationStyle": "custom"
+				}
+			},
+			{
+				"path": "pages/new_friend/new_friend",
+				"style": {
+					"navigationBarTitleText": "查找好友"
+				}
+			},
+			{
+				"path": "pages/group_msg/group_msg",
+				"style": {
+					"navigationBarTitleText": "",
+					"navigationStyle": "custom"
+				}
+			},
+			{
+				"path": "pages/group_info/group_info",
+				"style": {
+					"navigationBarTitleText": "",
+					"navigationStyle": "custom"
+				}
+			},
+			{
+				"path": "pages/msginfo_desc/msginfo_desc",
+				"style": {
+					"navigationBarTitleText": "",
+					"navigationStyle": "custom"
+				}
+			}
+
+			, {
+				"path": "components/emoji/emoji",
+				"style": {
+					"navigationBarTitleText": "",
+					"enablePullDownRefresh": false
+				}
+			}
+		    ,{
+            "path" : "pages/honbao/honbao",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+        ,{
+            "path" : "pages/receive/receive",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+    ],
+		"globalStyle": {
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "消息",
+			"navigationBarBackgroundColor": "#F8F8F8",
+			"backgroundColor": "#F8F8F8",
+			"navigationStyle": "custom"
+		}
+	}

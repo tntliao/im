@@ -1,0 +1,448 @@
+<!-- 语音通话 -->
+<template>
+	<view class="">
+		<view class="header">
+			<view class="return"></view>
+			<!-- <view class="return" @click="returnToBack"></view> -->
+			<text class="title">{{topTitle}}</text>
+			<view class="right">
+				<!-- <image class="info" :src="infoSrc" v-if="infoShow" @click="info()" mode=""></image> -->
+			</view>
+		</view>
+		<view class="content">
+			<text class="name">{{name}}</text>
+			<view class="head">
+				<view class="outline">
+					<image class="image" :src="headImage" mode=""></image>
+				</view>
+			</view>
+			<!-- 请求方 -->
+			<view class="tool user1" v-if="voiceState==1">
+				<view class="btn" @click="user2action(101)">
+					<image src="../../static/imgs/voice/phone.png" class="image" mode=""></image>
+				</view>
+			</view>
+			<!-- 接收方 -->
+			<view class="tool user2" v-else-if="voiceState==2">
+				<view class="btn" @click="user2action(100)">
+					<image src="../../static/imgs/voice/Answer Button.png" class="image" mode=""></image>
+				</view>
+				<view class="btn" @click="user2action(101)">
+					<image src="../../static/imgs/voice/Close Button.png" class="image" mode=""></image>
+				</view>
+			</view>
+
+			<!-- 通话中 -->
+			<view class="tool user3" v-else-if="voiceState==3">
+				<view class="btn" @click="user2action(101)">
+					<image src="../../static/imgs/voice/phone.png" class="image" mode=""></image>
+				</view>
+			</view>
+		</view>
+		<view class="">
+			<zego-local-view v-if="Zego" style="height:0px;flex: 1;"></zego-local-view>
+			<zego-remote-view v-if="Zego" :streamID="playID" style="height:0px;"></zego-remote-view>
+		</view>
+	</view>
+</template>
+
+<script>
+	// 1-导入Zego
+	import permision from "@/pages/permission.js";
+	import ZegoExpressEngine from '@/components/zego-ZegoExpressUniApp-JS/lib/ZegoExpressEngine';
+	import ZegoRemoteView from '@/components/zego-ZegoExpressUniApp-JS/zego-view/ZegoRemoteView';
+	import ZegoLocalView from '@/components/zego-ZegoExpressUniApp-JS/zego-view/ZegoLocalView';
+	export default {
+		components: {
+			ZegoRemoteView,
+			ZegoLocalView
+		},
+		data() {
+			return {
+				userId: uni.getStorageSync('user').userId, //我的userId
+				friendId: '', //跟我打电话的userId
+				name: '', //好友名字
+				backRoute: '', //返回路径
+				msgtype: '', //接电话100、挂电话101
+				timer: null, //通话计时器
+				time: 0, //通话时间
+				// 语音配置项
+				token: '',
+				roomid: '',
+				appid: 0,
+				server: '',
+				headImage: '',
+				voice: false, //接通了电话为true，没接通为false
+				voiceState: 3, //为1就是打电话的，2为接电话的,3为打电话中的事件
+				shenFen: 1, //1为打电话的，2为接电话的，当前这个页面是请求方还是接收方
+				backRouteState: 0, //0为默认返回，1为自定义返回
+				Zego: null,
+				publishID: '', //推流ID
+				playID: '', //拉流ID
+			}
+		},
+		onLoad: async function(opations) {
+			// console.log('语音通话页面收到的参数', opations) //urlencode自动解密
+			if (uni.getSystemInfoSync().platform === 'android') {
+				await permision.requestAndroidPermission('android.permission.RECORD_AUDIO'); //获取麦克风权限
+				// await permision.requestAndroidPermission('android.permission.CAMERA');//获取相机权限
+			}
+			this.friendId = opations.id;
+			// 推流 s_userId_friendId
+			// 拉流 s_friendId_userId
+			this.publishID = 's_' + this.userId + '_' + this.friendId
+			this.playID = 's_' + this.friendId + '_' + this.userId
+			// console.log("publishID: ", this.publishID, "playID: ", this.playID);
+			this.name = opations.name;
+			this.voiceState = Number(opations.voice); //true就是打电话的,false就是接电话的
+			this.shenFen = this.voiceState; //true就是打电话的,false就是接电话的
+			this.roomid = opations.roomid; //房间号
+			if (opations.backRoute) {
+				this.backRoute = encodeURIComponent(opations.backRoute); //返回路径，加密
+				this.backRouteState = this.backRoute; //为自定义返回
+			} else {
+				this.backRoute = `/pages/msginfo/msginfo?id=${this.friendId}&name=${this.name}` //默认返回到聊天页面
+				this.backRouteState = 0 //0为默认返回
+			}
+			// 获取通话的appid和server
+			this.$store.utils.tools.luch_get('/index/Chat/getconfig').then(async rs => {
+				this.appid = rs.appid;
+				this.server = rs.server;
+				// ---1.1 获取Zego token
+				let rst = await this.$store.utils.tools.luch_post('/index/Chat/gettoken', {
+					userId: this.userId,
+					roomid: this.roomid
+				})
+				if (rst.code != 0) {
+					this.$store.$showToast('网络异常')
+					return
+				}
+				// ---1.2创建引擎的参数
+				const profile = {
+					appID: this.appid,
+					appSign: rs.sign,
+					scenario: 0, //0
+				};
+				// this.Zego.loginRoom 登录传的参数
+				// 只有传入 “isUserStatusNotify” 参数取值为 “true” 的 ZegoRoomConfig，才能收到 onRoomUserUpdate 回调。
+				let roomConfig = {
+					isUserStatusNotify: true,
+					token: rst.token
+				};
+				switch (this.voiceState) {
+					case 1:
+						// ---1.2创建引擎
+						this.Zego = await ZegoExpressEngine.createEngineWithProfile(profile);
+						console.log('打电话创建引擎', this.Zego);
+						// ---1.3登录房间  (roomID,{userID,userName},roomConfig)
+						console.log('打电话创建完引擎，登录房间');
+						this.Zego.loginRoom(this.roomid, {
+							'userID': this.userId,
+							'userName': this.userId
+						}, roomConfig)
+						// 推流状态更新
+						this.Zego.on('roomStreamUpdate', (roomid, updateType, streamList) => {
+							switch (updateType) {
+								case 0: //0 对方接通开始推拉流
+									this.voiceState = 3;
+									this.logTime();
+									this.Zego.startPreview()
+									this.Zego.startPublishingStream(this.publishID)
+									this.Zego.startPlayingStream(this.playID);
+									break;
+								case 1: //对方挂断 销毁引擎
+									this.destroyZego();
+									this.clearTime()
+									this.changeVoiceState()
+									this.$store.$goBack(4,
+										`/pages/index/index?userId=${this.userId}&goGo=${this.backRouteState}`
+										);
+							}
+							// console.log("打电话updateType: ",updateType);
+						})
+						break;
+					case 2:
+						// ---1.2创建引擎
+						this.Zego = await ZegoExpressEngine.createEngineWithProfile(profile)
+						console.log('接电话创建引擎', this.Zego);
+						console.log('接电话创建完引擎，登录房间');
+						// ---1.3登录房间  (roomID,{userID,userName},roomConfig)
+						await this.Zego.loginRoom(this.roomid, {
+							'userID': this.userId,
+							'userName': this.userId
+						}, roomConfig);
+						// 房间状态更新
+						this.Zego.on('roomStateUpdate', () => {
+							console.log("接电话roomStateUpdate:===> ", arguments);
+						})
+						// 推流状态更新
+						this.Zego.on('roomStreamUpdate', (roomid, updateType, streamList) => {
+							switch (updateType) {
+								case 1:
+									this.destroyZego();
+									this.changeVoiceState();
+									this.$store.$goBack(4,
+										`/pages/index/index?userId=${this.userId}&goGo=${this.backRouteState}`
+										);
+							}
+							console.log("打电话updateType: ", updateType);
+						})
+						break;
+				}
+			});
+			this.getHeadImg(this.userId, this.friendId); //获得头像
+		},
+		methods: {
+			logTime() {
+				this.timer = setInterval(() => {
+					this.time++
+				}, 1000)
+			},
+			clearTime() {
+				clearInterval(this.timer)
+				this.timer = null
+			},
+			// 时间转换  总秒数转换为分秒的字符串'00:30'
+			/**
+			 * @description 总秒数转换为时分秒的字符串'00:00:30'
+			 * @param {Number} time 需要转换的秒数
+			 * @param {String} model 需要转换的格式
+			 * 默认minute return '00:30
+			 * 可选hour return '00:00:30'
+			 */
+			time_secondToStr(time = 0, model = 'minute') {
+				let h = 0
+				if (time / 3600 > 0) {
+					if (parseInt(time / 3600 >= 10)) {
+						h = parseInt(time / 3600)
+					} else {
+						h = '0' + parseInt(time / 3600)
+					}
+				} else {
+					h += '0'
+				}
+				let s = 0
+				if (time % 60 >= 10) {
+					s = parseInt(time % 60)
+				} else {
+					s = '0' + parseInt(time % 60)
+				}
+				let m = 0
+				if (parseInt(time / 60) > 0) {
+					if (parseInt(time / 60) % 60 >= 10) {
+						m = parseInt(time / 60) % 60
+					} else {
+						m = '0' + parseInt(time / 60) % 60
+					}
+				} else {
+					m += '0'
+				}
+				switch (model) {
+					case 'hour':
+						return h + ':' + m + ':' + s
+						break;
+					case 'minute':
+						return m + ':' + s
+						break;
+				}
+			},
+			async user2action(state) {
+				let that = this;
+				this.msgtype = state
+				let mine = state == 100 ? '接电话' : '挂电话'
+				let msg = {
+					type: 'voiceMessage',
+					data: {
+						mine,
+						to: this.friendId,
+						msgtype: state, //必传，接电话100，挂电话101
+					}
+				};
+				if (state == 100) {
+					this.voiceState = 3
+					this.logTime()
+					console.log("接通电话===>:推流ID ", this.publishID, "拉流ID: ", this.playID);
+					this.Zego.startPreview()
+					this.Zego.startPublishingStream(this.publishID)
+					this.Zego.startPlayingStream(this.playID)
+					console.log('接通电话: 推流拉流完成');
+				} else if (state == 101) {
+					this.destroyZego()
+					this.clearTime()
+					this.changeVoiceState()
+					this.$store.$goBack(4, `/pages/index/index?userId=${this.userId}&goGo=${this.backRouteState}`);
+				}
+			},
+			destroyZego() {
+				// console.log("this.Zego:11 ", this.Zego);
+				this.Zego.stopPublishingStream()
+				this.Zego.stopPlayingStream(this.roomid)
+				this.Zego.logoutRoom(this.roomid)
+				ZegoExpressEngine.destroyEngine()
+				this.Zego = null
+				console.log('销毁引擎成功');
+			},
+			// 将“通话中”切回“未通话”
+			async changeVoiceState() {
+				let status = await this.$store.utils.tools.luch_post('index/User/setvoice', {
+					userId: this.userId,
+					friendid: this.friendId,
+					status: 0,
+				})
+				return status
+			},
+			// token
+			async getToken() {
+				let rs = await this.$store.utils.tools.luch_post('/index/Chat/gettoken', {
+					userId: this.userId,
+					roomid: this.roomid
+				})
+				if (rs.code == 0) {
+					this.token = rs.token
+				}
+			},
+			///根据userId获取头像
+			getHeadImg(userId, uId) {
+				this.$store.utils.tools.luch_get('/index/Index/getuinfo', {
+					userId,
+					uId
+				}).then(rs => {
+					this.headImage = rs.headimgurl;
+				})
+			},
+		},
+		computed: {
+			topTitle() {
+				let state = this.voiceState
+				if (state == 1) {
+					return '等待对方接受邀请'
+				} else if (state == 2) {
+					return '等待接受对方邀请'
+				} else if (state == 3) {
+					return this.time_secondToStr(this.time, this.time >= 3600 ? 'hour' : 'minute')
+				}
+			}
+		},
+	}
+</script>
+
+<style lang="scss" scoped>
+	.content {
+		height: 600px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: space-around;
+		position: relative;
+	}
+
+	.name {
+		font-size: 36px;
+		font-weight: 600;
+		color: #4578D1;
+		line-height: 0px;
+		letter-spacing: 2px;
+		text-align: center;
+	}
+
+	/*************************打电话时的按钮****************/
+	.tool {
+		flex-direction: row;
+		justify-content: center;
+		width: 750rpx;
+
+		.image {
+			width: 64px;
+			height: 64px;
+			border-radius: 20px;
+		}
+
+		.btn {
+			width: 100px;
+			height: 64px;
+			border-radius: 20px;
+			flex-direction: row;
+			justify-content: center;
+		}
+	}
+
+	.user2 {
+		.button1 {
+			// background: url('@/static/imgs/voice/Answer Button.png');
+		}
+
+		.button2 {
+			// background: url('@/static/imgs/voice/Close Button.png');
+		}
+	}
+
+	/*****************************************************/
+	.head {
+		width: 190px;
+		height: 190px;
+		background: #F9F9FC;
+		border-radius: 71px 71px 71px 71px;
+		opacity: 1;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		margin: 0 auto;
+
+		.outline {
+			width: 140px;
+			height: 140px;
+			background: #F2F3F7;
+			border-radius: 50px 50px 50px 50px;
+			opacity: 1;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+
+			.image {
+				width: 100px;
+				height: 100px;
+				border-radius: 38px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+		}
+	}
+
+	/******************头部************************/
+	.status_view {
+		height: var(--status-bar-height);
+	}
+
+	.header {
+		width: 750rpx;
+		height: 180rpx;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		z-index: 100;
+		background: #FFFFFF;
+	}
+
+	.header .return {
+		width: 80rpx;
+		height: 80rpx;
+		background-size: cover;
+		margin-left: 40rpx;
+	}
+
+	.header .title {
+		color: #22345E;
+		font-size: 44rpx;
+	}
+
+	.header .info {
+		width: 80rpx;
+		height: 80rpx;
+		margin-right: 40rpx;
+	}
+
+	.right {
+		width: 80rpx;
+	}
+</style>

@@ -1,0 +1,13 @@
+{
+	"dependencies": {
+		"luch-request": "^3.0.7",
+		"md5": "^2.3.0",
+		"moment": "^2.29.4",
+		"pubsub-js": "^1.9.4",
+		"recorder-core": "^1.2.22062800",
+		"urlencode": "^1.1.0",
+		"uview-ui": "^2.0.33",
+		"vconsole": "^3.14.6",
+		"web3": "^1.7.4"
+	}
+}
